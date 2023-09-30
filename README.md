@@ -12,7 +12,7 @@ Every 30 minutes, Miku-sensei presents you with a kanji character, prompting you
 Miku-sensei adds an element of gamification to your learning experience. Earn XP for every correct answer and aim to reach higher levels. Streaks boost your XP, making it even more exciting.
 
 ### Multilingual Support
-While our main focus is Japanese, Miku-sensei technically also supports Chinese and Korean.
+While our main focus is Japanese, Miku-sensei can easily adapt to Chinese or Korean.
 
 ### SQL Database
 Miku-sensei utilizes an SQL database for efficient storage and retrieval of user data, ensuring a seamless and personalized learning journey.
