@@ -1,5 +1,5 @@
 # Miku-sensei: Your Kanji Learning Discord Bot 🎌
-![Miku-Sensei](photos/miku/basee.png)
+![Miku-Sensei](photos/miku/base.png)
 
 ## Introduction
 漢字練習にしてあげる！
