@@ -59,9 +59,9 @@ def submission_profile_upsert(user:str, condition:str, current_kanji:str):
         pid = _spuid_generator(user, 'previous')
         curs.execute('DELETE FROM submissionProfile WHERE spuid=?', (pid,))
         curs.execute('UPDATE submissionProfile SET period=?, spuid=? WHERE spuid=?', ('previous', pid, cid))
-        curs.execute('INSERT INTO submissionProfile(spuid, user, kanji, correct, c_time, first_incorrect, first_incorrect_time, second_incorrect, second_incorrect_time, third_incorrect, third_incorrect_time, period) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)', (cid, user, current_kanji, False, '', False, '', False, '', False, '', 'current'))
+        curs.execute('INSERT INTO submissionProfile(spuid, user, kanji, correct, correct_time, first_incorrect, first_incorrect_time, second_incorrect, second_incorrect_time, third_incorrect, third_incorrect_time, period) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)', (cid, user, current_kanji, False, '', False, '', False, '', False, '', 'current'))
     elif condition == 'insert':
-        curs.execute('INSERT INTO submissionProfile(spuid, user, kanji, correct, c_time, first_incorrect, first_incorrect_time, second_incorrect, second_incorrect_time, third_incorrect, third_incorrect_time, period) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)', (cid, user, current_kanji, False, '', False, '', False, '', False, '', 'current'))
+        curs.execute('INSERT INTO submissionProfile(spuid, user, kanji, correct, correct_time, first_incorrect, first_incorrect_time, second_incorrect, second_incorrect_time, third_incorrect, third_incorrect_time, period) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)', (cid, user, current_kanji, False, '', False, '', False, '', False, '', 'current'))
 
     conn.commit()
     return True

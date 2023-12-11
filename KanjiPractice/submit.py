@@ -9,6 +9,7 @@ import json
 from . import profile as pf, kanji as kn
 from Database.utils import curs, conn, submission_profile_upsert, _sp_update
 from Background.ServerUtils import current_time
+from Leveling import utils as lvl
 
 import discord
 
@@ -183,6 +184,9 @@ class KanjiSubmission():
         elif not self.accuracy:
             pf.update_value(self.user.name, ['total_incorrect', 'resetStreak'])
 
+        # update exp data
+        self.level_exit_sequence(user.name)
+
     def send_embed(self) -> discord.Embed:
         """ Sends embed from constructor function """ 
         embed = discord.Embed(title='Embed', color=discord.Colour.from_rgb(34,225,197))
@@ -192,7 +196,7 @@ class KanjiSubmission():
         file, selected_miku = self.miku_selecter()
         embed.set_image(url=f'attachment://{selected_miku}')
 
-        return embed, file            
+        return embed, file
 
     def message(self) -> str:
         """
@@ -202,7 +206,7 @@ class KanjiSubmission():
         :return: congrats/try again message as str
         """
         if self.accuracy:
-            type = 'congratulator'
+            type = 'congratulators'
         elif not self.accuracy:
             type = 'encouragers'
 
@@ -210,11 +214,25 @@ class KanjiSubmission():
             msgs = json.load(fn)
 
         data = [info for info in curs.execute('SELECT correct, first_incorrect, second_incorrect, third_incorrect FROM submissionProfile WHERE user=? AND period=?', (self.user.name, 'current'))][0]
+        print(f'sub statuses: {data}')
         submissions = len([sub for sub in data if sub == 1])
 
         response_set = msgs[str(submissions)]
         return random.choice(response_set)
 
+    def level_exit_sequence(self, user:str):
+        # obtain streak and awarded XP amounts
+        streak = pf.get_attribute(user, ['streak'])[0]
+        xp = lvl.xp_calculator(self.accuracy, streak)
+        # update experience amount in level DB
+        lvl.upsert_info(user, xp)
+        # update level and rank as needed in level DB
+        lvl._update_level_rank(user)
+        level, rank = lvl.profile_display(user)
+        # update level and rank of profile DB accordingly 
+        pf._update_level_rank(user, level, rank)
+
+        return True #TODO consider error catching / create info chokepoint -> all updates must be successful else an error raised
 
 
     def miku_selecter(self):

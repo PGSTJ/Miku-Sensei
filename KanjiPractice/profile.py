@@ -153,5 +153,39 @@ def validation(name:str) -> bool:
         return True
     else:
         return False
+    
+def get_attribute(user:str, *attributes) -> list:
+    """
+    Extracts specified profile attributes
+    
+    optional list with various values to update
+
+    - level
+    - total_correct
+    - total_incorrect
+    - total_answered
+    - streak
+    - achievements
+    - rank
+    - resetStreak
+    """
+    cols = ''
+    for attr in attributes[0]:
+        if attr in PROFILE_ATTRIBUTES:
+            cols + f', {attr}'
+
+    all = [attr for attr in attributes[0] if attr in PROFILE_ATTRIBUTES]
+    if len(all) > 1:
+        cols = ','.join(all)
+    else:
+        cols = all[0]
+    return [info for info in curs.execute(f'SELECT {cols} FROM profiles WHERE name=?', (user,))][0]
 
     
+def _update_level_rank(user:str, level:str=False, rank:str=False):
+    if level:
+        curs.execute('UPDATE profiles SET level=? WHERE name=?', (level, user))
+    elif rank:
+        curs.execute('UPDATE profiles SET rank=? WHERE name=?', (rank, user))
+    conn.commit()
+    return True
