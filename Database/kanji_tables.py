@@ -15,7 +15,7 @@ def kanji_cd():
 
 def submission_profile():
     """User specific, contains submission data per submission group (coupled to current kanji)"""
-    curs.execute('CREATE TABLE IF NOT EXISTS submissionProfile(spuid VARCHAR(10) PRIMARY KEY, user VARCHAR(20), correct BOOL, first_incorrect BOOL, FI_time VARCHAR(30), second_incorrect BOOL, SI_time VARCHAR(30), third_incorrect BOOL, TI_time VARCHAR(30), period VARCHAR(15))')
+    curs.execute('CREATE TABLE IF NOT EXISTS submissionProfile(spuid VARCHAR(10) PRIMARY KEY, user VARCHAR(20), kanji VARCHAR(8), correct BOOL, c_time VARCHAR(30), first_incorrect BOOL, first_incorrect_time VARCHAR(30), second_incorrect BOOL, second_incorrect_time VARCHAR(30), third_incorrect BOOL, third_incorrect_time VARCHAR(30), period VARCHAR(15))')
     return True
 
 def profile():
@@ -45,16 +45,5 @@ def test_table():
     conn.commit()
 
 if __name__ == '__main__':
-    q_package = [1, 0, 0, 0]
-    # determine if kanji is a verb; if not, removes verb question option
-    verb = False
-
-    if not verb:
-        formatted_group = enumerate(q_package[1:-1] + [1])
-    else:
-        formatted_group = enumerate(q_package[1:])
-
-    # organize current status of questions per DB into tuple pairs with mapped indices first and status second
-    organized_questions = [q_pair[0] for q_pair in formatted_group if q_pair[1] == 0]
-    print(f'question idxs: {organized_questions}')
+    submission_profile()
     

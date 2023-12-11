@@ -20,8 +20,11 @@ class Submission():
         self.timestamp = time
         self.accuracy = None
         self.maxed = False
+        self.first_submission = False
 
-        self.current_info = kn.current_kanji()[:-1]
+        self.current_info = kn.current_kanji() # package order: kanji, translation, pronunciation, verb, time set ck 
+        
+        self.submission_profile_verification(self.current_info[0])
         
         slv = self.submission_limit_verification()
         if slv:
@@ -29,14 +32,12 @@ class Submission():
         else:
             self.valid_submission = False
 
-        self.submission_profile_verification()
         
         if not self.answer_verification():
             print('erorr with answer verification')
+
+        self.update_db()
             
-
-
-
 
     def recent_submissions(self) -> list | bool:
         """ 
@@ -48,14 +49,13 @@ class Submission():
         """
         try:
             submits = [info for info in curs.execute('SELECT correct, first_incorrect, second_incorrect, third_incorrect FROM submissionProfile WHERE user=? AND period=?', (self.user, 'current'))][0]
-            ttl.warning(f'recent submissions: submits - {submits}')
+            # ttl.warning(f'recent submissions: submits - {submits}')
 
             return list(submits)
         except IndexError:
             return False 
         except Exception:
             traceback.print_exc()
-
 
     def submission_limit_verification(self) -> bool | Tuple[bool, int]:
         """
@@ -64,21 +64,26 @@ class Submission():
         :returns True: if submission limit has not been reached
         """
         sub_group = self.recent_submissions()
-        ttl.warning(f'sub group - {sub_group}')
+        # ttl.warning(f'sub group - {sub_group}')
+        print(f'sub answer group: {sub_group}')
         
+        answered = [sub for sub in sub_group if sub == 1]
+        print(f'recent subs: {answered}')
+        if len(answered) < 1:
+            self.first_submission = True
 
         if not sub_group:
             ttl.warning('T - brand new user')
             return True
 
         # first check if user has already answered correctly
-        elif sub_group[0]:
+        elif sub_group[0] is True:
             ttl.warning('F - previous correct answer in SP')
             return False 
         else:
             # removes correct value and focuses incorrect statuses
-            incorrect_amount = len([values for values in sub_group[1:] if values])
-            ttl.warning(incorrect_amount)
+            incorrect_amount = len([values for values in sub_group[1:] if values == 1])
+            # ttl.warning(incorrect_amount)
 
             if incorrect_amount < 3:
                 return True, incorrect_amount
@@ -90,34 +95,52 @@ class Submission():
                 return False
                 # 'maxed out guesses; wait for next kanji'
         
-        
-    def submission_profile_verification(self) -> bool:
+    def submission_profile_verification(self, current_kanji:str) -> bool:
         """ Determines if user has a prior submission profile and will create if not """
 
         existing_users = [info[0] for info in curs.execute('SELECT user FROM submissionProfile')]
         if self.user in existing_users:
-            # reset submission profile in DB with current submission group data
-            submission_profile_upsert(self.user, 'update')
-            logger.info(f'Submission Profile reset for {self.user}')
+            if self._verify_current_period(current_kanji):
+                return True
+            else:
+                # reset submission profile in DB with current submission group data
+                submission_profile_upsert(self.user, 'update', current_kanji)
+                logger.info(f'Submission Profile reset for {self.user}')
         elif self.user not in existing_users:
             # create new submission profile in DB
-            submission_profile_upsert(self.user, 'insert')
+            submission_profile_upsert(self.user, 'insert', current_kanji)
             logger.info(f'Submission Profile created for {self.user}')
         else:
             logger.error(f'Unable to verify submission profile query or handle creation for user: {self.user}')
-            return False        
+            return False
         return True
     
-    def update_db(self, ica:int):
+    def _verify_current_period(self, ck:str):
+        """ Determines whether a new current period needs to be created """
+        curr_per_kan = [info[0] for info in curs.execute('SELECT kanji FROM submissionProfile WHERE period=?', ('current',))][0]
+        if ck == curr_per_kan:
+            return True
+        else:
+            return False
+    
+    def update_db(self):
         """ Updates submission profile in the DB """
+        if self.first_submission:
+            pf.update_value(self.user, ['total_answered'])
 
         if self.accuracy:
-            _sp_update(self.user, self.accuracy)
+            return _sp_update(self.user, self.accuracy, self.timestamp)
         else:
-            _sp_update(self.user, self.accuracy, ica)
+            ica = self._all_incorrects()
+            return _sp_update(self.user, self.accuracy, self.timestamp, ica)
 
         
-    
+
+    def _all_incorrects(self) -> int:
+        """ Determine number of incorrects for the current submission period"""
+        db_ica = [info for info in curs.execute('SELECT first_incorrect, second_incorrect, third_incorrect FROM submissionProfile WHERE user=? AND period =?', (self.user, 'current'))][0]
+        return len([amt for amt in db_ica if amt == 1])
+
     def answer_verification(self) -> bool:
         """
         Compares user given answer to chosen kanji in kanji DB
@@ -139,4 +162,3 @@ class Submission():
         logger.info(f'{self.user} submitted')
         # extras={'user':self.user, 'answer':self.answer, 'accuracy':self.accuracy, 'correct answer':self.current_info}
            
-

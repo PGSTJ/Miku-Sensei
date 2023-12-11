@@ -132,6 +132,7 @@ def _current_profile_attributes(name:str) -> Dict[str, int]:
     """ Creates formatted dictionary of current profile values"""
     current_values = list([info for info in curs.execute('SELECT * from profiles WHERE name=?', (name,))][0])
     
+    # index of category in PROFILE_ATTRIBUTES is mapped to order of columns extracted from DB
     return {cat:current_values[PROFILE_ATTRIBUTES.index(cat) + 1] for cat in PROFILE_ATTRIBUTES}
 
 
