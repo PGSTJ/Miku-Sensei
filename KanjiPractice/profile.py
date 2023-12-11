@@ -1,14 +1,12 @@
-import sqlite3 as sl
 import discord
-import datetime
 import logging
 import traceback
 from typing import Dict
 
-import json
 
 from Database.utils import curs, conn, PROFILE_ATTRIBUTES
 from Background.ServerUtils import current_time
+from Leveling import utils as lvl
 
 logger = logging.getLogger('JPGen')
 logger_pfu = logging.getLogger('PFU')
@@ -38,7 +36,9 @@ def create_profile(user: str) -> bool:
     :param user: discord name as str
     """
     try:
-        curs.execute('INSERT INTO profiles(name, level, total_correct, total_incorrect, total_answered, streak, achievements, rank, created) VALUES (?,?,?,?,?,?,?,?,?)', (user, 0, 0, 0, 0, 0, 0, 0, current_time()))
+        lvl.upsert_info(user)
+        level_descr, rnk = lvl.profile_display(user)
+        curs.execute('INSERT INTO profiles(name, level, total_correct, total_incorrect, total_answered, streak, achievements, rank, created) VALUES (?,?,?,?,?,?,?,?,?)', (user, level_descr, 0, 0, 0, 0, 0, rnk, current_time()))
         conn.commit()
 
         logger.info(f'{user} created a JapaneseLearner profile')
@@ -74,7 +74,7 @@ def profile_embed(user:discord.Member) -> discord.Embed:
     if user_info[0][7] == 0:
         rank = 'Unranked'
     else:
-        rank = f'Rank {user_info[0][7]}'
+        rank = f'{user_info[0][7]}'
     try:
         ci_ratio = float(user_info[0][2] / user_info[0][3])
     except ZeroDivisionError:

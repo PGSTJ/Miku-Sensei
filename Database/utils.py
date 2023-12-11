@@ -8,6 +8,10 @@ db = 'Database\\kanji-practice.db'
 conn = sl.connect(db, check_same_thread=False)
 curs = conn.cursor()
 
+db_levels = 'Database\\level-data.db'
+conn_lvl = sl.connect(db_levels, check_same_thread=False)
+curs_lvl = conn_lvl.cursor()
+
 ttl = logging.getLogger('TT')
 
 VOCAB_DATA = 'Database\\data\\kanji.csv'

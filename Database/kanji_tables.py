@@ -1,5 +1,3 @@
-import random
-
 from utils import curs, conn
 
 def kanji_bd(): # before deployment, update to be only creating kanji table rather than sample
@@ -19,7 +17,7 @@ def submission_profile():
     return True
 
 def profile():
-    curs.execute('CREATE TABLE IF NOT EXISTS profiles(name VARCHAR(20) PRIMARY KEY, level INT, total_correct INT, total_incorrect INT, total_answered INT, streak INT, achievements INT, rank VARCHAR(20), created VARCHAR(15))')
+    curs.execute('CREATE TABLE IF NOT EXISTS profiles(name VARCHAR(20) PRIMARY KEY, level VARCHAR(15), total_correct INT, total_incorrect INT, total_answered INT, streak INT, achievements INT, rank VARCHAR(30), created VARCHAR(15))')
     return True
 
 def recreate_all():

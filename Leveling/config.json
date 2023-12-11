@@ -1,0 +1,20 @@
+{
+    "baseXPreq": 10,
+    "baseXPrew": 1,
+    "EXPfactor": 1.5,
+    "baseStreakMultiplier": 1,
+    "streakLevelMultiplier": 0.1,
+    "streakFactor": 1.5,
+    "rankTitles": {
+        "10": "Melody Apprentice",
+        "20": "Lyric Explorer",
+        "30": "Harmony Seeker",
+        "40": "Rhythm Artisan",
+        "50": "Vocal Virtuoso",
+        "60": "Composer Extraordinaire",
+        "70": "Kanji Maestro",
+        "80": "Symphony Sorcerer",
+        "90": "Celestial Composer",
+        "100": "Vocaloid Virtuoso"
+    }
+}
