@@ -1,13 +1,12 @@
 import random
-import discord
 import datetime
 import traceback
 import logging
-import os
-from typing import List
 
 from Database.utils import curs, conn
 from . import profile as pf
+
+import discord
 
 log_JPGen = logging.getLogger('JPGen')
 ttl = logging.getLogger('TT')
@@ -83,7 +82,7 @@ class KanjiPresentation(EmbedCreation):
         curs.execute('UPDATE kanjiCD SET current=?', (False,))
         
         self.kanji_id, self.question_idx = self._available_kanji()
-        print(self.kanji_id)
+        # print(self.kanji_id)
 
         # update object attributes
         self.current_kanji = [char[0] for char in curs.execute('SELECT kanji FROM kanjiBD WHERE id=?',(self.kanji_id,))][0]
@@ -194,75 +193,4 @@ class SubmissionMenu(discord.ui.View):
     async def pronunciation(self, interaction: discord.Interaction, button:discord.ui.Button):
         ck = current_kanji()
         await interaction.response.send_message(ck[2])
-    
-
-
-class KanjiSubmission(EmbedCreation):
-    """Responsible for embed creation and coordination"""
-    def __init__(self, user:discord.Member, accuracy:bool, force_show:bool=False, **kwargs) -> None:
-        super().__init__()   
-        self.user = user
-        self.accuracy = accuracy
-        self.force_show = force_show
-        self.msg = self.message()
-        if 'sub_level' in kwargs:
-            self.sub_level = kwargs['sub_level']
-            self.msg = self.message(self.sub_level)
-
-        if self.accuracy:
-            pf.update_value(self.user.name, ['total_correct', 'streak'])
-        elif not self.accuracy:
-            pf.update_value(self.user.name, ['total_incorrect', 'resetStreak'])
-
-    def send_embed(self) -> discord.Embed:
-        """ Sends embed from constructor function """ 
-        embed = discord.Embed(title='Embed', color=discord.Colour.from_rgb(34,225,197))
-        embed.title = f'Kanji Practice - {self.user.name}'
-        embed.add_field(name=self.accuracy, value=self.msg)
-
-        file, selected_miku = self.miku_selecter()
-        embed.set_image(url=f'attachment://{selected_miku}')
-
-        return embed, file            
-
-    def message(self, incorrectLevel:int=0) -> str:
-        """
-        Determines which message variant to send after submission: congrats or deny
-
-        :param submitLevel: int corresponding to adjusted submission number (submission number - 1); required for submitLevel specific messages
-        :return: congrats/try again message as str
-        """
-        congratulators = [
-            'Good job!',
-            'Nicee',
-            'Solid answer',
-            'yessir'
-        ]
-
-        deniers = [
-            'Try again?',
-            'Not quite',
-            '2 more tries',
-            '1 more try..',
-            'mmm, last try!'
-        ]
-
-        if self.accuracy:
-                return random.choice(congratulators)
-        elif not self.accuracy:
-            match incorrectLevel:
-                case 0:
-                    return random.choice(deniers[:3])
-                case 1:
-                    return random.choice(deniers[:4])
-                case 2:
-                    return random.choice(deniers)
-            # TODO fix matching incorrect level and cases
-
-    def miku_selecter(self):
-        """ Randomly selects a Miku Variant for message thumbnails """
-        all = os.listdir(self.MIKU_FOLDER)
-        selected = random.choice(all)
-        path = os.path.join(self.MIKU_FOLDER, selected)
-        file = discord.File(path, selected)
-        return file, selected
+            

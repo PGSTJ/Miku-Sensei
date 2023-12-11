@@ -5,6 +5,8 @@ import logging
 import traceback
 from typing import Dict
 
+import json
+
 from Database.utils import curs, conn, PROFILE_ATTRIBUTES
 from Background.ServerUtils import current_time
 
@@ -151,8 +153,5 @@ def validation(name:str) -> bool:
         return True
     else:
         return False
-
-if __name__ == '__main__':
-    pass
 
     

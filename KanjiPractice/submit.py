@@ -2,13 +2,18 @@ import datetime
 import traceback
 import logging
 from typing import Tuple
+import os
+import random
+import json
 
 from . import profile as pf, kanji as kn
 from Database.utils import curs, conn, submission_profile_upsert, _sp_update
 from Background.ServerUtils import current_time
 
+import discord
 
 logger = logging.getLogger('JPGen')
+logger_sub = logging.getLogger('Submission')
 ttl = logging.getLogger('TT')
 
 
@@ -65,10 +70,10 @@ class Submission():
         """
         sub_group = self.recent_submissions()
         # ttl.warning(f'sub group - {sub_group}')
-        print(f'sub answer group: {sub_group}')
+        # print(f'sub answer group: {sub_group}')
         
         answered = [sub for sub in sub_group if sub == 1]
-        print(f'recent subs: {answered}')
+        # print(f'recent subs: {answered}')
         if len(answered) < 1:
             self.first_submission = True
 
@@ -162,3 +167,62 @@ class Submission():
         logger.info(f'{self.user} submitted')
         # extras={'user':self.user, 'answer':self.answer, 'accuracy':self.accuracy, 'correct answer':self.current_info}
            
+
+class KanjiSubmission():
+    """Responsible for embed creation and coordination"""
+    MIKU_FOLDER = 'photos\\miku'
+
+    def __init__(self, user:discord.Member, accuracy:bool, force_show:bool=False, **kwargs) -> None: 
+        self.user = user
+        self.accuracy = accuracy
+        self.force_show = force_show
+        self.msg = self.message()
+
+        if self.accuracy:
+            pf.update_value(self.user.name, ['total_correct', 'streak'])
+        elif not self.accuracy:
+            pf.update_value(self.user.name, ['total_incorrect', 'resetStreak'])
+
+    def send_embed(self) -> discord.Embed:
+        """ Sends embed from constructor function """ 
+        embed = discord.Embed(title='Embed', color=discord.Colour.from_rgb(34,225,197))
+        embed.title = f'Kanji Practice - {self.user.name}'
+        embed.add_field(name=self.accuracy, value=self.msg)
+
+        file, selected_miku = self.miku_selecter()
+        embed.set_image(url=f'attachment://{selected_miku}')
+
+        return embed, file            
+
+    def message(self) -> str:
+        """
+        Determines which message variant to send after submission: congrats or deny
+
+        :param submitLevel: int corresponding to adjusted submission number (submission number - 1); required for submitLevel specific messages
+        :return: congrats/try again message as str
+        """
+        if self.accuracy:
+            type = 'congratulator'
+        elif not self.accuracy:
+            type = 'encouragers'
+
+        with open(f'KanjiPractice\\{type}.json', 'r') as fn:
+            msgs = json.load(fn)
+
+        data = [info for info in curs.execute('SELECT correct, first_incorrect, second_incorrect, third_incorrect FROM submissionProfile WHERE user=? AND period=?', (self.user.name, 'current'))][0]
+        submissions = len([sub for sub in data if sub == 1])
+
+        response_set = msgs[str(submissions)]
+        return random.choice(response_set)
+
+
+
+    def miku_selecter(self):
+        """ Randomly selects a Miku Variant for message thumbnails """
+        all = os.listdir(self.MIKU_FOLDER)
+        selected = random.choice(all)
+        path = os.path.join(self.MIKU_FOLDER, selected)
+        file = discord.File(path, selected)
+        return file, selected
+        
+        

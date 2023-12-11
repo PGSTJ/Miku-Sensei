@@ -2,6 +2,7 @@ import sqlite3 as sl
 import logging
 import traceback
 from typing import Tuple
+import uuid
 
 db = 'Database\\kanji-practice.db'
 conn = sl.connect(db, check_same_thread=False)
@@ -65,6 +66,8 @@ def submission_profile_upsert(user:str, condition:str, current_kanji:str):
 def _spuid_generator(user:str, period:str) -> str:
     """ Generates spuid based on user and period """
     return f'SP.{user[:3].upper()}.{period[:3].upper()}'
+    # random_component = str(uuid.uuid4().hex)[:4]
+    # return f'{user}_{time}_{random_component}'
 
 
 
@@ -75,7 +78,7 @@ def _sp_update(user:str, accuracy:bool, time:str, incorrect_number:int=0):
             col = 'correct'
         elif not accuracy:
             col = SUB_PRO_DB_IC_COLS[incorrect_number]
-            print(f'corrected ica: {incorrect_number+1}')
+            # print(f'corrected ica: {incorrect_number+1}')
             
         curs.execute(f'UPDATE submissionProfile SET {col}=?, {col}_time=? WHERE user=? AND period=?', (True, time, user, 'current'))
         conn.commit()
@@ -169,5 +172,5 @@ def vocab_import_csv(book:int):
 
 
 if __name__ == '__main__':
-    if vocab_import_csv(1):
-        print('table created')
+    pass
+

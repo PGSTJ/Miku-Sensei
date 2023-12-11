@@ -23,9 +23,9 @@ class JapanesePractice(commands.Cog, name="JapanesePractice"):
             
             submission_report = submit.Submission(user.name, answer, current_time())
             if not submission_report.valid_submission:
-                return await ctx.send('You have reached your submission limit. Please wait until the next kanji has been presented.') # TODO consider alternate response for previous correct
+                return await ctx.send('You\'ve reached your submission limit for now, senpai! Take a breather and let the melodies of the next kanji inspire you. Miku will be right here, cheering you on for the next challenge') # TODO consider alternate response for previous correct
             
-            presentation = kanji.KanjiSubmission(user, submission_report.accuracy)
+            presentation = submit.KanjiSubmission(user, submission_report.accuracy)
             embed, file = presentation.send_embed()
             return await ctx.send(file=file, embed=embed, view=kanji.SubmissionMenu()) 
         except Exception:
