@@ -1,3 +1,5 @@
+import random
+
 from utils import curs, conn
 
 def kanji_bd(): # before deployment, update to be only creating kanji table rather than sample
@@ -34,5 +36,25 @@ def recreate_all():
     else:
         print('error, no tables created')
 
+
+
+def test_table():
+    curs.execute('CREATE TABLE IF NOT EXISTS test(id VARCHAR(15) PRIMARY KEY, asked_translation BOOL, asked_pronunciation BOOL, asked_verb BOOL, current BOOL, time_current VARCHAR(40))')
+    curs.execute('INSERT INTO test(id, asked_translation, asked_pronunciation, asked_verb, current, time_current) VALUES(?,?,?,?,?,?)', (1, True, True, False, False, ''))
+    curs.execute('INSERT INTO test(id, asked_translation, asked_pronunciation, asked_verb, current, time_current) VALUES(?,?,?,?,?,?)', (2, False, False, False, False, ''))
+    conn.commit()
+
 if __name__ == '__main__':
-    recreate_all()
+    q_package = [1, 0, 0, 0]
+    # determine if kanji is a verb; if not, removes verb question option
+    verb = False
+
+    if not verb:
+        formatted_group = enumerate(q_package[1:-1] + [1])
+    else:
+        formatted_group = enumerate(q_package[1:])
+
+    # organize current status of questions per DB into tuple pairs with mapped indices first and status second
+    organized_questions = [q_pair[0] for q_pair in formatted_group if q_pair[1] == 0]
+    print(f'question idxs: {organized_questions}')
+    

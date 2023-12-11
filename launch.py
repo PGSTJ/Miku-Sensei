@@ -59,8 +59,8 @@ async def on_ready():
 @bot.command(name='sk')
 async def kanjiqs(ctx:commands.Context):
     present = kanji.KanjiPresentation()
-    embed, file = present.get_kanji_embed()
-    await ctx.send(embed=embed, file=file)
+    embed = present.get_kanji_embed()
+    await ctx.send(embed=embed)
 
 
 async def ask_kanji():
