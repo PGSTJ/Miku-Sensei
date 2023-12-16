@@ -82,7 +82,7 @@ class KanjiPresentation(EmbedCreation):
         curs.execute('UPDATE kanjiCD SET current=?', (False,))
         
         self.kanji_id, self.question_idx = self._available_kanji()
-        # print(self.kanji_id)
+        print(self.kanji_id)
 
         # update object attributes
         self.current_kanji = [char[0] for char in curs.execute('SELECT kanji FROM kanjiBD WHERE id=?',(self.kanji_id,))][0]

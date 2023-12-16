@@ -6,6 +6,7 @@ from discord.ext import commands
 
 from KanjiPractice import profile, kanji, submit
 from Background.ServerUtils import current_time
+from Leveling import utils as lvl
 
 
 class JapanesePractice(commands.Cog, name="JapanesePractice"):
@@ -42,8 +43,8 @@ class JapanesePractice(commands.Cog, name="JapanesePractice"):
         valid = profile.validation(show.name)
 
         if valid:
-            profil = profile.profile_embed(show)
-            await ctx.send(embed=profil)
+            pfl = profile.profile_embed(show)
+            await ctx.send(embed=pfl)
         elif not valid:
             await ctx.send('This profile does not exist. Make sure to include an @ before specifying a user or check spelling.')
             
@@ -83,6 +84,23 @@ class JapanesePractice(commands.Cog, name="JapanesePractice"):
         em = discord.Embed(title='Current Kanji', description=curr_kan[0])
         await ctx.send(embed=em)
 
+
+    @commands.command(name='ge')
+    async def give_exp(self, ctx:commands.Context, amount:int):
+        """Give specified amount of XP to self"""
+        user = ctx.author.name
+        lvlDBupate = lvl.give_exp(user, amount)
+        update = lvl.LevelRankUpdater(user, extra_xp=amount)
+        
+        level, rank = update.profile_display()
+        print(f'new level: {level} | new rank: {rank}')
+
+        pfDBupdate = profile._update_level_rank(user, level, rank)
+
+        if lvlDBupate and pfDBupdate:
+            await ctx.send(f'{amount} XP deposited')
+        else:
+            await ctx.send('error updating something')
         
 
     

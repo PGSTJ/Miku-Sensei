@@ -1,5 +1,3 @@
-import random
-
 from utils import curs, conn
 
 def kanji_bd(): # before deployment, update to be only creating kanji table rather than sample
@@ -15,11 +13,11 @@ def kanji_cd():
 
 def submission_profile():
     """User specific, contains submission data per submission group (coupled to current kanji)"""
-    curs.execute('CREATE TABLE IF NOT EXISTS submissionProfile(spuid VARCHAR(10) PRIMARY KEY, user VARCHAR(20), kanji VARCHAR(8), correct BOOL, c_time VARCHAR(30), first_incorrect BOOL, first_incorrect_time VARCHAR(30), second_incorrect BOOL, second_incorrect_time VARCHAR(30), third_incorrect BOOL, third_incorrect_time VARCHAR(30), period VARCHAR(15))')
+    curs.execute('CREATE TABLE IF NOT EXISTS submissionProfile(spuid VARCHAR(10) PRIMARY KEY, user VARCHAR(20), kanji VARCHAR(8), correct BOOL, correct_time VARCHAR(30), first_incorrect BOOL, first_incorrect_time VARCHAR(30), second_incorrect BOOL, second_incorrect_time VARCHAR(30), third_incorrect BOOL, third_incorrect_time VARCHAR(30), period VARCHAR(15))')
     return True
 
 def profile():
-    curs.execute('CREATE TABLE IF NOT EXISTS profiles(name VARCHAR(20) PRIMARY KEY, level INT, total_correct INT, total_incorrect INT, total_answered INT, streak INT, achievements INT, rank VARCHAR(20), created VARCHAR(15))')
+    curs.execute('CREATE TABLE IF NOT EXISTS profiles(name VARCHAR(20) PRIMARY KEY, level VARCHAR(15), total_correct INT, total_incorrect INT, total_answered INT, streak INT, achievements INT, rank VARCHAR(30), created VARCHAR(15))')
     return True
 
 def recreate_all():
