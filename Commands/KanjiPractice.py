@@ -6,6 +6,7 @@ from discord.ext import commands
 
 from KanjiPractice import profile, kanji, submit
 from Background.ServerUtils import current_time
+from Leveling import utils as lvl
 
 
 class JapanesePractice(commands.Cog, name="JapanesePractice"):
@@ -23,9 +24,9 @@ class JapanesePractice(commands.Cog, name="JapanesePractice"):
             
             submission_report = submit.Submission(user.name, answer, current_time())
             if not submission_report.valid_submission:
-                return await ctx.send('You have reached your submission limit. Please wait until the next kanji has been presented.') # TODO consider alternate response for previous correct
+                return await ctx.send('You\'ve reached your submission limit for now, senpai! Take a breather and let the melodies of the next kanji inspire you. Miku will be right here, cheering you on for the next challenge') # TODO consider alternate response for previous correct
             
-            presentation = kanji.KanjiSubmission(user, submission_report.accuracy)
+            presentation = submit.KanjiSubmission(user, submission_report.accuracy)
             embed, file = presentation.send_embed()
             return await ctx.send(file=file, embed=embed, view=kanji.SubmissionMenu()) 
         except Exception:
@@ -42,8 +43,8 @@ class JapanesePractice(commands.Cog, name="JapanesePractice"):
         valid = profile.validation(show.name)
 
         if valid:
-            profil = profile.profile_embed(show)
-            await ctx.send(embed=profil)
+            pfl = profile.profile_embed(show)
+            await ctx.send(embed=pfl)
         elif not valid:
             await ctx.send('This profile does not exist. Make sure to include an @ before specifying a user or check spelling.')
             
@@ -83,6 +84,23 @@ class JapanesePractice(commands.Cog, name="JapanesePractice"):
         em = discord.Embed(title='Current Kanji', description=curr_kan[0])
         await ctx.send(embed=em)
 
+
+    @commands.command(name='ge')
+    async def give_exp(self, ctx:commands.Context, amount:int):
+        """Give specified amount of XP to self"""
+        user = ctx.author.name
+        lvlDBupate = lvl.give_exp(user, amount)
+        update = lvl.LevelRankUpdater(user, extra_xp=amount)
+        
+        level, rank = update.profile_display()
+        print(f'new level: {level} | new rank: {rank}')
+
+        pfDBupdate = profile._update_level_rank(user, level, rank)
+
+        if lvlDBupate and pfDBupdate:
+            await ctx.send(f'{amount} XP deposited')
+        else:
+            await ctx.send('error updating something')
         
 
     

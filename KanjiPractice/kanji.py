@@ -1,13 +1,12 @@
 import random
-import discord
 import datetime
 import traceback
 import logging
-import os
-from typing import List
 
 from Database.utils import curs, conn
 from . import profile as pf
+
+import discord
 
 log_JPGen = logging.getLogger('JPGen')
 ttl = logging.getLogger('TT')
@@ -35,20 +34,12 @@ class EmbedCreation():
         """
 
         embed = discord.Embed(title='Embed', color=discord.Colour.from_rgb(34,225,197))
-        # file, selected_miku = self.miku_selecter()
-        # embed.set_image(url=f'attachment://{selected_miku}')
 
         if type == 'kanji presentation':
             embed.title = 'Kanji Practice'
             kanji = modifiers['current']
             question = modifiers['question']
             embed.add_field(name=question, value=kanji)
-
-
-        elif type == 'kanji submission':
-            user:discord.Member = modifiers['user']
-            embed.title = f'Kanji Practice - {user.name}'
-            embed.add_field(name=modifiers['accuracy'], value=modifiers['message'])
 
         elif type == 'maxed submissions':
             embed.title = 'Current Kanji Answer'
@@ -60,14 +51,6 @@ class EmbedCreation():
             embed.add_field(name='Pronunciation', value=pronunciation)
 
         return embed
-    
-    def miku_selecter(self):
-        """ Randomly selects a Miku Variant for message thumbnails """
-        all = os.listdir(self.MIKU_FOLDER)
-        selected = random.choice(all)
-        path = os.path.join(self.MIKU_FOLDER, selected)
-        file = discord.File(path, selected)
-        return file, selected
         
 
 
@@ -157,11 +140,11 @@ class KanjiPresentation(EmbedCreation):
         else:
             formatted_group = enumerate(q_package[1:])
         
-        print(self.verb_type)
+        # print(self.verb_type)
 
         # extract saved indices pertaining to available questions - will map selected question index to question type
         organized_questions = [q_pair[0] for q_pair in formatted_group if q_pair[1] == 0]
-        print(f'org_qs: {organized_questions}')
+        # print(f'org_qs: {organized_questions}')
         q_i = random.choice(organized_questions)
         return q_i + 1
     
@@ -210,61 +193,4 @@ class SubmissionMenu(discord.ui.View):
     async def pronunciation(self, interaction: discord.Interaction, button:discord.ui.Button):
         ck = current_kanji()
         await interaction.response.send_message(ck[2])
-    
-
-
-class KanjiSubmission(EmbedCreation):
-    """Responsible for embed creation and coordination"""
-    def __init__(self, user:discord.Member, accuracy:bool, force_show:bool=False, **kwargs) -> None:
-        super().__init__()   
-        self.user = user
-        self.accuracy = accuracy
-        self.force_show = force_show
-        self.msg = self.message()
-        if 'sub_level' in kwargs:
-            self.sub_level = kwargs['sub_level']
-            self.msg = self.message(self.sub_level)
-
-        if self.accuracy:
-            pf.update_value(self.user.name, ['total_correct', 'total_answered', 'streak'])
-        elif not self.accuracy:
-            pf.update_value(self.user.name, ['total_incorrect', 'total_answered', 'resetStreak'])
-
-    def send_embed(self) -> discord.Embed:
-        """ Sends embed from constructor function """ 
-        return self.create_embed('kanji submission', user=self.user, accuracy=self.accuracy, message=self.msg)
             
-
-    def message(self, incorrectLevel:int=0) -> str:
-        """
-        Determines which message variant to send after submission: congrats or deny
-
-        :param submitLevel: int corresponding to adjusted submission number (submission number - 1); required for submitLevel specific messages
-        :return: congrats/try again message as str
-        """
-        congratulators = [
-            'Good job!',
-            'Nicee',
-            'Solid answer',
-            'yessir'
-        ]
-
-        deniers = [
-            'Try again?',
-            'Not quite',
-            '2 more tries',
-            '1 more try..',
-            'mmm, last try!'
-        ]
-
-        if self.accuracy:
-                return random.choice(congratulators)
-        elif not self.accuracy:
-            match incorrectLevel:
-                case 0:
-                    return random.choice(deniers[:3])
-                case 1:
-                    return random.choice(deniers[:4])
-                case 2:
-                    return random.choice(deniers)
-            # TODO fix matching incorrect level and cases

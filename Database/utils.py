@@ -2,10 +2,15 @@ import sqlite3 as sl
 import logging
 import traceback
 from typing import Tuple
+import uuid
 
 db = 'Database\\kanji-practice.db'
 conn = sl.connect(db, check_same_thread=False)
 curs = conn.cursor()
+
+db_levels = 'Database\\level-data.db'
+conn_lvl = sl.connect(db_levels, check_same_thread=False)
+curs_lvl = conn_lvl.cursor()
 
 ttl = logging.getLogger('TT')
 
@@ -41,7 +46,7 @@ NUMBER_CONVERSION = {
 }
 
 
-def submission_profile_upsert(user:str, condition:str):   
+def submission_profile_upsert(user:str, condition:str, current_kanji:str):   
     """
     Updates/Inserts into DB based on condition
 
@@ -54,9 +59,9 @@ def submission_profile_upsert(user:str, condition:str):
         pid = _spuid_generator(user, 'previous')
         curs.execute('DELETE FROM submissionProfile WHERE spuid=?', (pid,))
         curs.execute('UPDATE submissionProfile SET period=?, spuid=? WHERE spuid=?', ('previous', pid, cid))
-        curs.execute('INSERT INTO submissionProfile(spuid, user, correct, first_incorrect, FI_time, second_incorrect, SI_time, third_incorrect, TI_time, period) VALUES (?,?,?,?,?,?,?,?,?,?)', (cid, user, False, 0, 0, 0, 0, 0, 0, 'current'))
+        curs.execute('INSERT INTO submissionProfile(spuid, user, kanji, correct, correct_time, first_incorrect, first_incorrect_time, second_incorrect, second_incorrect_time, third_incorrect, third_incorrect_time, period) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)', (cid, user, current_kanji, False, '', False, '', False, '', False, '', 'current'))
     elif condition == 'insert':
-        curs.execute('INSERT INTO submissionProfile(spuid, user, correct, first_incorrect, FI_time, second_incorrect, SI_time, third_incorrect, TI_time, period) VALUES (?,?,?,?,?,?,?,?,?,?)', (cid, user, False, 0, 0, 0, 0, 0, 0, 'current'))
+        curs.execute('INSERT INTO submissionProfile(spuid, user, kanji, correct, correct_time, first_incorrect, first_incorrect_time, second_incorrect, second_incorrect_time, third_incorrect, third_incorrect_time, period) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)', (cid, user, current_kanji, False, '', False, '', False, '', False, '', 'current'))
 
     conn.commit()
     return True
@@ -65,18 +70,21 @@ def submission_profile_upsert(user:str, condition:str):
 def _spuid_generator(user:str, period:str) -> str:
     """ Generates spuid based on user and period """
     return f'SP.{user[:3].upper()}.{period[:3].upper()}'
+    # random_component = str(uuid.uuid4().hex)[:4]
+    # return f'{user}_{time}_{random_component}'
 
 
 
-def _sp_update(user:str, accuracy:bool, incorrect_number:int=None):
+def _sp_update(user:str, accuracy:bool, time:str, incorrect_number:int=0):
     """ Updates submission profile in DB table """
     try:
         if accuracy:
             col = 'correct'
         elif not accuracy:
-            col = SUB_PRO_DB_IC_COLS[incorrect_number-1]
+            col = SUB_PRO_DB_IC_COLS[incorrect_number]
+            # print(f'corrected ica: {incorrect_number+1}')
             
-        curs.execute(f'UPDATE submissionProfile SET {col}=? WHERE user=? AND period=?', (True, user, 'current'))
+        curs.execute(f'UPDATE submissionProfile SET {col}=?, {col}_time=? WHERE user=? AND period=?', (True, time, user, 'current'))
         conn.commit()
         return True
     except TypeError:
@@ -168,5 +176,7 @@ def vocab_import_csv(book:int):
 
 
 if __name__ == '__main__':
-    if vocab_import_csv(1):
-        print('table created')
+    d = e = 2
+    e = 4
+    print(e, d)
+

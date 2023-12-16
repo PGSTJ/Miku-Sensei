@@ -189,7 +189,7 @@ async def get_server():
 def current_time():
     """ Gets current time and returns as Y-M-D H:M:S """
     now = datetime.datetime.now()
-    return now.strftime('%Y-%m-%d %H:%M:%S,%f')
+    return now.strftime('%Y-%m-%d %H:%M:%S')
 
 
 def time_check(self, minutes: int, timestamp: datetime) -> bool:
