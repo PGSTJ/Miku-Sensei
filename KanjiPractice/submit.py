@@ -184,7 +184,7 @@ class KanjiSubmission():
         elif not self.accuracy:
             pf.update_value(self.user.name, ['total_incorrect', 'resetStreak'])
 
-        # update exp data
+        # update profile data in both DBs
         self.level_exit_sequence(user.name)
 
     def send_embed(self) -> discord.Embed:
@@ -223,12 +223,8 @@ class KanjiSubmission():
     def level_exit_sequence(self, user:str):
         # obtain streak and awarded XP amounts
         streak = pf.get_attribute(user, ['streak'])[0]
-        xp = lvl.xp_calculator(self.accuracy, streak)
-        # update experience amount in level DB
-        lvl.upsert_info(user, xp)
-        # update level and rank as needed in level DB
-        lvl._update_level_rank(user)
-        level, rank = lvl.profile_display(user)
+        updater = lvl.LevelRankUpdater(user, streak=streak, accuracy=self.accuracy)
+        level, rank = updater.profile_display()
         # update level and rank of profile DB accordingly 
         pf._update_level_rank(user, level, rank)
 

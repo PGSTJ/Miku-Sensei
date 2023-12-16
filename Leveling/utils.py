@@ -18,78 +18,140 @@ STREAK_FACTOR = prefs['streakFactor']
 
 RANK_TITLES = prefs['rankTitles']
 
-def calculate_level_requirement(level:int) -> int:
-    """ Find total XP required to level up """
-    return round((BASE_XP_REQUIREMENT * level ** EXP_FACTOR),0)
 
-def calculate_streak_reward(streak_length:int) -> int:
-    streak_multiplier = (BASE_STREAK_MULTIPLIER + streak_length * STREAK_LEVEL_MULTIPLIER) ** STREAK_FACTOR
-    return round((BASE_XP_REWARD * streak_multiplier),0)
 
-def determine_rank(level:int) -> str:
-    """ Determines rank title based on level """
-    for group in RANK_TITLES:
-        if level < int(group):
-            return RANK_TITLES[group]
+
+class LevelRankUpdater():
+    """ Updates profile data which is accessible by profile_display() method """
+    def __init__(self, user:str, streak:int=0, accuracy:bool=None, submission:bool=True, extra_xp:int=0) -> None:
+        self.user = user
+        self.streak = streak
+        self.accuracy = accuracy
+
+        # current info 
+        player_info = self.get_level_info(self.user)
+        self.level = self.update_level_to = player_info[0]
+        self.experience = player_info[1]
+        self.rank = player_info[2]
+
+        if submission:
+            self.rewarded_xp = self.xp_calculator()
+        if not submission:
+            self.rewarded_xp = extra_xp
         
-def _update_level_rank(user:str):
-    """ Determines if new level has been reached """
-    data:tuple = get_level_info(user) # (level, experience, rank)
-    lvl_req = calculate_level_requirement(data[0])
-    if data[1] > lvl_req:
-        new_level = data[0] + 1
-        curs_lvl.execute('UPDATE levelsInfo SET level=? WHERE name=?', (new_level, user))
+        print(f'rew xp: {self.rewarded_xp}')
+
+        # update databases: level and total experience - rank will inherently update based off those two values
+        update_exp = upsert_info(self.user, self.rewarded_xp) # update experience
+        update_level = self.updater() # update level
+
+        if update_exp and update_level:
+            self.rank = self.determine_rank() # update rank
+
+        # level up info - must happen last to ensure UTD in profile display
+        self.level_up_req = self.calculate_level_requirement(self.level)
+
     
-        if new_level % 10 == 0:
-            new_rank = determine_rank(data[0])
-            curs_lvl.execute('UPDATE levelsInfo SET rank=? WHERE name=?', (new_rank, user))
+    @staticmethod
+    def get_level_info(user:str) -> list:
+        """ Gets player level info to display from levelsInfo DB """
+        return list([info for info in curs_lvl.execute('SELECT level, experience, rank FROM levelsInfo WHERE name=?', (user,))][0])
+    
+    @staticmethod
+    def calculate_level_requirement(level:int) -> int:
+        """ Find total XP required to level up """
+        return round((BASE_XP_REQUIREMENT * level ** EXP_FACTOR),0)
+    
+    def calculate_streak_reward(self) -> int:
+        print(f'streak: {self.streak}')
+        streak_multiplier = (BASE_STREAK_MULTIPLIER + self.streak * STREAK_LEVEL_MULTIPLIER) ** STREAK_FACTOR
+        print(f'streak multiplier: {streak_multiplier}')
+        return round((BASE_XP_REWARD * streak_multiplier),0)
+    
 
-    conn_lvl.commit()
-    return True
+    def xp_calculator(self) -> int:
+        """ Determines amount of XP based on accuracy and streak """
+        if not self.accuracy:
+            return 0
+        elif self.accuracy:
+            if self.streak > 1:
+                return self.calculate_streak_reward()
+            else:
+                return 1
+    
+    def determine_rank(self) -> str:
+        """ Determines rank title based on level """
+        for group in RANK_TITLES:
+            print(f'rank title: {RANK_TITLES[group]}')
+            if self.level < int(group):
+                return RANK_TITLES[group]
+            
+    def updater(self, loop=True):
+        """ Determines if new level has been reached and updates DB for LEVEL"""
+        total_exp = self.experience + self.rewarded_xp
 
-def xp_calculator(accuracy:bool, streak:int) -> int:
-    """ Determines amount of XP based on accuracy and streak """
-    if not accuracy:
-        return 0
-    elif accuracy:
-        if streak > 1:
-            return calculate_streak_reward(streak)
+        # new level determination
+        while loop:
+            lur = self.calculate_level_requirement(self.update_level_to)
+            if total_exp > lur:
+                self.update_level_to += 1
+            elif total_exp < lur:
+                loop = False
+            else:
+                loop = False
+                return False # error
+        
+        # update database as needed
+        if self.level != self.update_level_to:
+            curs_lvl.execute('UPDATE levelsInfo SET level=? WHERE name=?', (self.update_level_to, self.user))
+            conn_lvl.commit()
+
+            self.level = self.update_level_to # allows determination of new rank
+            return True
+        elif self.level == self.update_level_to:
+            return True
         else:
-            return 1
-        
-        
+            return False # error
 
 
-def get_level_info(user:str):
-    """ Gets player level info to display as: Level - (current xp/xp req) """
-    return [info for info in curs_lvl.execute('SELECT level, experience, rank FROM levelsInfo WHERE name=?', (user,))][0]
+    def profile_display(self) -> tuple:
+        """ Returns string format for Profile Card """
+        lvl_prog = f'{self.experience}/{int(self.level_up_req)}'
+        return f'{self.level} ({lvl_prog})', self.rank
 
-def upsert_info(user:str, experience:int=False):
-    """ Adds or updates exsting data in level info table """
+
+
+
+def upsert_info(user:str, rewarded_experience:int=False):
+    """ Adds or updates exsting EXPERIENCE data in level info table """
     stored_users = [info for info in curs_lvl.execute('SELECT level, experience, rank FROM levelsInfo WHERE name=?', (user,))]
 
     # add new user
     if not stored_users:
-        rk = determine_rank(1)
+        rk = RANK_TITLES['10']
         curs_lvl.execute('INSERT INTO levelsInfo(name, level, experience, rank) VALUES (?,?,?,?)', (user, 1, 0, rk))
-    else:
-        if experience:
-            curr_xp = int([info[0] for info in curs_lvl.execute('SELECT experience FROM levelsInfo WHERE name=?', (user,))][0])
-            new = curr_xp + experience
-            curs_lvl.execute('UPDATE levelsInfo SET experience=? WHERE name=?', (new, user))
+
+    # calculates new total XP based on rewarded XP 
+    if rewarded_experience:
+        curr_xp = int([info[0] for info in curs_lvl.execute('SELECT experience FROM levelsInfo WHERE name=?', (user,))][0])
+        new = curr_xp + rewarded_experience
+        curs_lvl.execute('UPDATE levelsInfo SET experience=? WHERE name=?', (new, user))
 
     conn_lvl.commit()
     return True
 
-def profile_display(user:str):
-    data = get_level_info(user)
-    level = data[0]
-    exp = data[1]
-    rank:str = data[2]
 
-    req = calculate_level_requirement(level)
-    lvl_prog = f'{exp}/{int(req)}'
-    return f'{level} ({lvl_prog})', rank
+def give_exp(user:str, amount:int):
+    try:
+        current = [info[0] for info in curs_lvl.execute('SELECT experience FROM levelsInfo WHERE name=?', (user,))][0]
+        new = amount + int(current)
+    except:
+        new = amount
+
+    upsert_info(user, new)
+    
+    return True
+
 
 
 

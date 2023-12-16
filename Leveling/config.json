@@ -3,7 +3,7 @@
     "baseXPrew": 1,
     "EXPfactor": 1.5,
     "baseStreakMultiplier": 1,
-    "streakLevelMultiplier": 0.1,
+    "streakLevelMultiplier": 0.2,
     "streakFactor": 1.5,
     "rankTitles": {
         "10": "Melody Apprentice",

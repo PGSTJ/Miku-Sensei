@@ -176,5 +176,7 @@ def vocab_import_csv(book:int):
 
 
 if __name__ == '__main__':
-    pass
+    d = e = 2
+    e = 4
+    print(e, d)
 

@@ -37,7 +37,7 @@ def create_profile(user: str) -> bool:
     """
     try:
         lvl.upsert_info(user)
-        level_descr, rnk = lvl.profile_display(user)
+        level_descr, rnk = '0 (0/0)', 'unranked'
         curs.execute('INSERT INTO profiles(name, level, total_correct, total_incorrect, total_answered, streak, achievements, rank, created) VALUES (?,?,?,?,?,?,?,?,?)', (user, level_descr, 0, 0, 0, 0, 0, rnk, current_time()))
         conn.commit()
 
@@ -66,17 +66,17 @@ def profile_embed(user:discord.Member) -> discord.Embed:
     :param user: name of user as string to locate in DB
     :return: discord.Embed of profile info
     """
-    user_info = [info for info in curs.execute('SELECT * FROM profiles WHERE name=?', (user.name,))]
+    user_info = [info for info in curs.execute('SELECT * FROM profiles WHERE name=?', (user.name,))][0]
 
     # set/create attributes
-    level = f'Level: {user_info[0][1]}'
-    record = f'{user_info[0][2]} - {user_info[0][3]}'
-    if user_info[0][7] == 0:
+    level = f'Level: {user_info[1]}'
+    record = f'{user_info[2]} - {user_info[3]}'
+    if user_info[7] == 0:
         rank = 'Unranked'
     else:
-        rank = f'{user_info[0][7]}'
+        rank = f'{user_info[7]}'
     try:
-        ci_ratio = float(user_info[0][2] / user_info[0][3])
+        ci_ratio = float(user_info[2] / user_info[3])
     except ZeroDivisionError:
         ci_ratio = 0.0
 
@@ -84,11 +84,11 @@ def profile_embed(user:discord.Member) -> discord.Embed:
     profile = discord.Embed(title=f'Japanese Practice Profile - {user.name}', color=discord.Colour.from_rgb(34,225,197), description=f'{level} | {rank}')
 
     profile.add_field(name='Record', value=record)
-    profile.add_field(name='Streak', value=user_info[0][5])
-    profile.add_field(name='Questions Answered', value=user_info[0][4])
+    profile.add_field(name='Streak', value=user_info[5])
+    profile.add_field(name='Questions Answered', value=user_info[4])
 
     profile.add_field(name='C/I ratio', value=ci_ratio)
-    profile.add_field(name='Achievements', value=user_info[0][6])
+    profile.add_field(name='Achievements', value=user_info[6])
 
     profile.set_thumbnail(url=user.avatar)
 
@@ -185,7 +185,7 @@ def get_attribute(user:str, *attributes) -> list:
 def _update_level_rank(user:str, level:str=False, rank:str=False):
     if level:
         curs.execute('UPDATE profiles SET level=? WHERE name=?', (level, user))
-    elif rank:
+    if rank:
         curs.execute('UPDATE profiles SET rank=? WHERE name=?', (rank, user))
     conn.commit()
     return True
