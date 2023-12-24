@@ -214,7 +214,7 @@ class KanjiSubmission():
             msgs = json.load(fn)
 
         data = [info for info in curs.execute('SELECT correct, first_incorrect, second_incorrect, third_incorrect FROM submissionProfile WHERE user=? AND period=?', (self.user.name, 'current'))][0]
-        print(f'sub statuses: {data}')
+        # print(f'sub statuses: {data}')
         submissions = len([sub for sub in data if sub == 1])
 
         response_set = msgs[str(submissions)]

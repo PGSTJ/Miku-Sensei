@@ -174,8 +174,9 @@ def current_kanji() -> list:
     """Returns: list with following order: kanji, translation, pronunciation, verb, time set ck"""
     id = [info for info in curs.execute('SELECT id, time_current FROM kanjiCD WHERE current=?', (True,))][0]
     ck = [info for info in curs.execute('SELECT kanji, translation, pronunciation, verb FROM kanjiBD WHERE id=?', (id[0],))][0]
+    # print(f'ck id: {id[1]}')
     if ck:
-        return list(ck) + list(id[1])
+        return list(ck) + [id[1]]
     else:
         return None
 
