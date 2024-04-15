@@ -39,7 +39,7 @@ class LevelRankUpdater():
         if not submission:
             self.rewarded_xp = extra_xp
         
-        print(f'rew xp: {self.rewarded_xp}')
+        # print(f'rew xp: {self.rewarded_xp}')
 
         # update databases: level and total experience - rank will inherently update based off those two values
         update_exp = upsert_info(self.user, self.rewarded_xp) # update experience
@@ -63,9 +63,9 @@ class LevelRankUpdater():
         return round((BASE_XP_REQUIREMENT * level ** EXP_FACTOR),0)
     
     def calculate_streak_reward(self) -> int:
-        print(f'streak: {self.streak}')
+        # print(f'streak: {self.streak}')
         streak_multiplier = (BASE_STREAK_MULTIPLIER + self.streak * STREAK_LEVEL_MULTIPLIER) ** STREAK_FACTOR
-        print(f'streak multiplier: {streak_multiplier}')
+        # print(f'streak multiplier: {streak_multiplier}')
         return round((BASE_XP_REWARD * streak_multiplier),0)
     
 
@@ -82,7 +82,7 @@ class LevelRankUpdater():
     def determine_rank(self) -> str:
         """ Determines rank title based on level """
         for group in RANK_TITLES:
-            print(f'rank title: {RANK_TITLES[group]}')
+            # print(f'rank title: {RANK_TITLES[group]}')
             if self.level < int(group):
                 return RANK_TITLES[group]
             

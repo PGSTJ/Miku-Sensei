@@ -80,6 +80,7 @@ class JapanesePractice(commands.Cog, name="JapanesePractice"):
     async def current_kanji(self, ctx:commands.Context):
         """See the current kanji"""
         curr_kan = kanji.current_kanji()
+        print(f'current info: {curr_kan}')
         
         em = discord.Embed(title='Current Kanji', description=curr_kan[0])
         await ctx.send(embed=em)
