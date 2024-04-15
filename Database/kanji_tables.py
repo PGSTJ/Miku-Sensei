@@ -14,7 +14,7 @@ def kanji_bd(): # before deployment, update to be only creating kanji table rath
 
 def kanji_cd():
     """ Creates kanji code data table related to book data table """
-    curs.execute('CREATE TABLE IF NOT EXISTS kanjiCD(id VARCHAR(15) PRIMARY KEY, book INT, chapter INT, asked_translation BOOL, asked_pronunciation BOOL, asked_verb BOOL, current BOOL, time_current VARCHAR(40), FOREIGN KEY (id) REFERENCES kanjiBD(id))')
+    curs.execute('CREATE TABLE IF NOT EXISTS kanjiCD(id VARCHAR(15) PRIMARY KEY, book INT, chapter INT, asked_translation BOOL, asked_pronunciation BOOL, asked_verb BOOL, current BOOL, time_current VARCHAR(40), question_type INT, FOREIGN KEY (id) REFERENCES kanjiBD(id))')
     conn.commit()
     return True
 
@@ -67,7 +67,7 @@ class KanjiUpload():
     def _upload_to_db(self):
         try:
             curs.execute('INSERT INTO kanjiBD(id, kanji, translation, pronunciation, verb) VALUES(?,?,?,?,?)', (self.id, self.term, self.tranlsation, self.pronunciation, self.verb))
-            curs.execute('INSERT INTO kanjiCD(id, book, chapter, asked_translation, asked_pronunciation, asked_verb, current, time_current) VALUES(?,?,?,?,?,?,?,?)', (self.id, self.book, self.chapter, False, False, False, False, ''))
+            curs.execute('INSERT INTO kanjiCD(id, book, chapter, asked_translation, asked_pronunciation, asked_verb, current, time_current, question_type) VALUES(?,?,?,?,?,?,?,?,?)', (self.id, self.book, self.chapter, False, False, False, False, '', 0))
         except:
             traceback.print_exc()
             return False # raise error    
@@ -95,6 +95,8 @@ class KanjiUpload():
         self.id = f'{self.book}.{self.chapter}.{str(all + 1)}'
         return True
 
+    def pronunciation_formatter(self):
+        """ formats commas back into pronunciation, inititially removed to avoid confusion with CSV parsing """
 
 
 def upload_kanji():
@@ -123,6 +125,14 @@ def test_table():
     conn.commit()
 
 if __name__ == '__main__':
-    recreate_all()
-    upload_kanji()
+    # recreate_all()
+    # upload_kanji()
+    id = [info for info in curs.execute('SELECT id, time_current, question_type FROM kanjiCD WHERE current=?', (True,))][0]
+    ck = [info for info in curs.execute('SELECT kanji, translation, pronunciation, verb FROM kanjiBD WHERE id=?', (id[0],))][0]
+    # print(f'ck id: {id[1]}')
+    print(type(id[1:3]))
+    if ck:
+        # add timestamp set current to info package
+        d = list(ck) + id[1:3]
+        print(d)
     

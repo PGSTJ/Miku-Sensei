@@ -28,7 +28,7 @@ class Submission():
         self.maxed = False
         self.first_submission = False
 
-        self.current_info = kn.current_kanji() # package order: kanji, translation, pronunciation, verb, time set ck 
+        self.current_info = kn.current_kanji() # package order: kanji, translation, pronunciation, verb, time set ck, question type
         
         self.submission_profile_verification(self.current_info[0])
         
@@ -157,16 +157,22 @@ class Submission():
         if not self.current_info:
             print('issue with current info')
             return False
-        if self.answer in self.current_info:
-            self.accuracy = True
-            return True
+        
+        # extracts specific answer based on question type (ie, if asking for translation, will extract correct translation)
+        answer_key = self.current_info[self.current_info[5]]
 
-        elif self.answer not in self.current_info:
+        print(f'answer: {self.answer}')
+        print(f'anskwer key: {answer_key}')
+    
+        
+        if self.answer in answer_key:
+            self.accuracy = True
+        elif self.answer not in answer_key:
             self.accuracy = False
-            return True
         
         logger.info(f'{self.user} submitted')
         # extras={'user':self.user, 'answer':self.answer, 'accuracy':self.accuracy, 'correct answer':self.current_info}
+        return True
            
 
 class KanjiSubmission():
@@ -223,7 +229,7 @@ class KanjiSubmission():
     def level_exit_sequence(self, user:str):
         # obtain streak and awarded XP amounts
         streak = pf.get_attribute(user, ['streak'])[0]
-        updater = lvl.LevelRankUpdater(user, streak=streak, accuracy=self.accuracy)
+        updater = lvl.LevelInfoUpdater(user, streak=streak, accuracy=self.accuracy)
         level, rank = updater.profile_display()
         # update level and rank of profile DB accordingly 
         pf._update_level_rank(user, level, rank)

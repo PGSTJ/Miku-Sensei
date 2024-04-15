@@ -82,17 +82,16 @@ class KanjiPresentation(EmbedCreation):
         curs.execute('UPDATE kanjiCD SET current=?', (False,))
         
         self.kanji_id, self.question_idx = self._available_kanji()
-        print(self.kanji_id)
 
         # update object attributes
         self.current_kanji = [char[0] for char in curs.execute('SELECT kanji FROM kanjiBD WHERE id=?',(self.kanji_id,))][0]
         self.ck_timestamp = datetime.datetime.now()
         
         # update logs
-        log_JPGen.info(f'{self.current_kanji} presented to server')
+        log_JPGen.info(f'{self.kanji_id} presented to server')
 
         # update DB that chosen word has been shown
-        curs.execute('UPDATE kanjiCD SET current=?, time_current=? WHERE id=?', (True, self.ck_timestamp, self.kanji_id))
+        curs.execute('UPDATE kanjiCD SET current=?, time_current=?, question_type=? WHERE id=?', (True, self.ck_timestamp, self.question_idx, self.kanji_id))
         conn.commit()
             
     def _available_kanji(self, loop=True) -> list | bool:
@@ -128,7 +127,7 @@ class KanjiPresentation(EmbedCreation):
 
         return QUESTIONS[question_idx]
     
-    def _question_determination(self, q_package:list):
+    def _question_determination(self, q_package:list) -> int:
         """ Organizes current question data and randomly chooses a question based on status """
         # determine if kanji is a verb; if not, removes verb question option/consideration
         self.verb_type = [info[0] for info in curs.execute('SELECT verb FROM kanjiBD where id=?', (q_package[0],))][0]
@@ -171,12 +170,13 @@ class KanjiPresentation(EmbedCreation):
     
 
 def current_kanji() -> list:
-    """Returns: list with following order: kanji, translation, pronunciation, verb, time set ck"""
-    id = [info for info in curs.execute('SELECT id, time_current FROM kanjiCD WHERE current=?', (True,))][0]
+    """Returns: list with following order: kanji, translation, pronunciation, verb, time set ck, q type"""
+    id = [info for info in curs.execute('SELECT id, time_current, question_type FROM kanjiCD WHERE current=?', (True,))][0]
     ck = [info for info in curs.execute('SELECT kanji, translation, pronunciation, verb FROM kanjiBD WHERE id=?', (id[0],))][0]
     # print(f'ck id: {id[1]}')
     if ck:
-        return list(ck) + [id[1]]
+        # add timestamp set current to info package
+        return list(ck) + list(id[1:3])
     else:
         return None
 
