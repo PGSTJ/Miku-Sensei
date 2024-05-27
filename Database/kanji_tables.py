@@ -20,7 +20,7 @@ def kanji_cd():
 
 def submission_profile():
     """User specific, contains submission data per submission group (coupled to current kanji)"""
-    curs.execute('CREATE TABLE IF NOT EXISTS submissionProfile(spuid VARCHAR(10) PRIMARY KEY, user VARCHAR(20), kanji VARCHAR(8), correct BOOL, correct_time VARCHAR(30), first_incorrect BOOL, first_incorrect_time VARCHAR(30), second_incorrect BOOL, second_incorrect_time VARCHAR(30), third_incorrect BOOL, third_incorrect_time VARCHAR(30), period VARCHAR(15))')
+    curs.execute('CREATE TABLE IF NOT EXISTS submissionProfile(spuid VARCHAR(10) PRIMARY KEY, user VARCHAR(20), kanji VARCHAR(8), correct BOOL, total_incorrect INT, correct_time VARCHAR(30), first_incorrect BOOL, first_incorrect_time VARCHAR(30), second_incorrect BOOL, second_incorrect_time VARCHAR(30), third_incorrect BOOL, third_incorrect_time VARCHAR(30), period VARCHAR(15))')
     return True
 
 def profile():
@@ -125,14 +125,5 @@ def test_table():
     conn.commit()
 
 if __name__ == '__main__':
-    # recreate_all()
-    # upload_kanji()
-    id = [info for info in curs.execute('SELECT id, time_current, question_type FROM kanjiCD WHERE current=?', (True,))][0]
-    ck = [info for info in curs.execute('SELECT kanji, translation, pronunciation, verb FROM kanjiBD WHERE id=?', (id[0],))][0]
-    # print(f'ck id: {id[1]}')
-    print(type(id[1:3]))
-    if ck:
-        # add timestamp set current to info package
-        d = list(ck) + id[1:3]
-        print(d)
+    submission_profile()
     
