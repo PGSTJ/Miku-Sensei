@@ -14,13 +14,13 @@ def kanji_bd(): # before deployment, update to be only creating kanji table rath
 
 def kanji_cd():
     """ Creates kanji code data table related to book data table """
-    curs.execute('CREATE TABLE IF NOT EXISTS kanjiCD(id VARCHAR(15) PRIMARY KEY, book INT, chapter INT, asked_translation BOOL, asked_pronunciation BOOL, asked_verb BOOL, current BOOL, time_current VARCHAR(40), FOREIGN KEY (id) REFERENCES kanjiBD(id))')
+    curs.execute('CREATE TABLE IF NOT EXISTS kanjiCD(id VARCHAR(15) PRIMARY KEY, book INT, chapter INT, asked_translation BOOL, asked_pronunciation BOOL, asked_verb BOOL, current BOOL, time_current VARCHAR(40), question_type INT, FOREIGN KEY (id) REFERENCES kanjiBD(id))')
     conn.commit()
     return True
 
 def submission_profile():
     """User specific, contains submission data per submission group (coupled to current kanji)"""
-    curs.execute('CREATE TABLE IF NOT EXISTS submissionProfile(spuid VARCHAR(10) PRIMARY KEY, user VARCHAR(20), kanji VARCHAR(8), correct BOOL, correct_time VARCHAR(30), first_incorrect BOOL, first_incorrect_time VARCHAR(30), second_incorrect BOOL, second_incorrect_time VARCHAR(30), third_incorrect BOOL, third_incorrect_time VARCHAR(30), period VARCHAR(15))')
+    curs.execute('CREATE TABLE IF NOT EXISTS submissionProfile(spuid VARCHAR(10) PRIMARY KEY, user VARCHAR(20), kanji VARCHAR(8), correct BOOL, total_incorrect INT, correct_time VARCHAR(30), first_incorrect BOOL, first_incorrect_time VARCHAR(30), second_incorrect BOOL, second_incorrect_time VARCHAR(30), third_incorrect BOOL, third_incorrect_time VARCHAR(30), period VARCHAR(15))')
     return True
 
 def profile():
@@ -67,7 +67,7 @@ class KanjiUpload():
     def _upload_to_db(self):
         try:
             curs.execute('INSERT INTO kanjiBD(id, kanji, translation, pronunciation, verb) VALUES(?,?,?,?,?)', (self.id, self.term, self.tranlsation, self.pronunciation, self.verb))
-            curs.execute('INSERT INTO kanjiCD(id, book, chapter, asked_translation, asked_pronunciation, asked_verb, current, time_current) VALUES(?,?,?,?,?,?,?,?)', (self.id, self.book, self.chapter, False, False, False, False, ''))
+            curs.execute('INSERT INTO kanjiCD(id, book, chapter, asked_translation, asked_pronunciation, asked_verb, current, time_current, question_type) VALUES(?,?,?,?,?,?,?,?,?)', (self.id, self.book, self.chapter, False, False, False, False, '', 0))
         except:
             traceback.print_exc()
             return False # raise error    
@@ -95,6 +95,8 @@ class KanjiUpload():
         self.id = f'{self.book}.{self.chapter}.{str(all + 1)}'
         return True
 
+    def pronunciation_formatter(self):
+        """ formats commas back into pronunciation, inititially removed to avoid confusion with CSV parsing """
 
 
 def upload_kanji():
@@ -123,6 +125,5 @@ def test_table():
     conn.commit()
 
 if __name__ == '__main__':
-    recreate_all()
-    upload_kanji()
+    submission_profile()
     

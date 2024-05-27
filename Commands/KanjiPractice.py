@@ -44,9 +44,9 @@ class JapanesePractice(commands.Cog, name="JapanesePractice"):
 
         if valid:
             pfl = profile.profile_embed(show)
-            await ctx.send(embed=pfl)
+            return await ctx.send(embed=pfl)
         elif not valid:
-            await ctx.send('This profile does not exist. Make sure to include an @ before specifying a user or check spelling.')
+            return await ctx.send('This profile does not exist. Make sure to include an @ before specifying a user or check spelling.')
             
 
     @commands.command(name="cp")
@@ -54,12 +54,13 @@ class JapanesePractice(commands.Cog, name="JapanesePractice"):
         """Creates profile for author"""
         user = ctx.author.name
         valid = profile.validation(user)
+        lvl.LevelInfo(user)
 
         if valid:
-            await ctx.send('Profile already exists. See your profile with command \'!sp\' ')
+            return await ctx.send('Profile already exists. See your profile with command \'!sp\' ')
         elif not valid:
             profile.create_profile(user)
-            await ctx.send(f'Profile created for {user}')
+            return await ctx.send(f'Profile created for {user}')
         
 
     @commands.command(name="dp")
@@ -67,13 +68,15 @@ class JapanesePractice(commands.Cog, name="JapanesePractice"):
         """Delets profile for author"""
         user = ctx.author.name
         valid = profile.validation(user)
+        li = lvl.LevelInfo(user)
 
         em = discord.Embed(title='Are you sure?', description='All of your stats will be lost')
 
         if valid:
-            await ctx.send(embed=em, view=profile.DeleteProfile(user))
+            li.delete_DB_profile()
+            return await ctx.send(embed=em, view=profile.DeleteProfile(user))
         elif not valid:
-            await ctx.send(f'Profile for {user} does not exist')
+            return await ctx.send(f'Profile for {user} does not exist')
 
 
     @commands.command(name="ck")
@@ -83,25 +86,20 @@ class JapanesePractice(commands.Cog, name="JapanesePractice"):
         print(f'current info: {curr_kan}')
         
         em = discord.Embed(title='Current Kanji', description=curr_kan[0])
-        await ctx.send(embed=em)
+        return await ctx.send(embed=em)
 
 
     @commands.command(name='ge')
     async def give_exp(self, ctx:commands.Context, amount:int):
         """Give specified amount of XP to self"""
         user = ctx.author.name
-        lvlDBupate = lvl.give_exp(user, amount)
-        update = lvl.LevelRankUpdater(user, extra_xp=amount)
+        update = lvl.LevelInfoUpdater(user, submission=False, extra_xp=amount)
         
         level, rank = update.profile_display()
+        profile._update_level_rank(user, level, rank)
         print(f'new level: {level} | new rank: {rank}')
-
-        pfDBupdate = profile._update_level_rank(user, level, rank)
-
-        if lvlDBupate and pfDBupdate:
-            await ctx.send(f'{amount} XP deposited')
-        else:
-            await ctx.send('error updating something')
+        
+        return await ctx.send(f'{amount} XP deposited')
         
 
     

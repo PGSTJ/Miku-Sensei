@@ -36,7 +36,6 @@ def create_profile(user: str) -> bool:
     :param user: discord name as str
     """
     try:
-        lvl.upsert_info(user)
         level_descr, rnk = '0 (0/0)', 'unranked'
         curs.execute('INSERT INTO profiles(name, level, total_correct, total_incorrect, total_answered, streak, achievements, rank, created) VALUES (?,?,?,?,?,?,?,?,?)', (user, level_descr, 0, 0, 0, 0, 0, rnk, current_time()))
         conn.commit()

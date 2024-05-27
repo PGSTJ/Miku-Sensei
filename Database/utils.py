@@ -59,9 +59,9 @@ def submission_profile_upsert(user:str, condition:str, current_kanji:str):
         pid = _spuid_generator(user, 'previous')
         curs.execute('DELETE FROM submissionProfile WHERE spuid=?', (pid,))
         curs.execute('UPDATE submissionProfile SET period=?, spuid=? WHERE spuid=?', ('previous', pid, cid))
-        curs.execute('INSERT INTO submissionProfile(spuid, user, kanji, correct, correct_time, first_incorrect, first_incorrect_time, second_incorrect, second_incorrect_time, third_incorrect, third_incorrect_time, period) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)', (cid, user, current_kanji, False, '', False, '', False, '', False, '', 'current'))
+        curs.execute('INSERT INTO submissionProfile(spuid, user, kanji, correct, total_incorrect, correct_time, first_incorrect, first_incorrect_time, second_incorrect, second_incorrect_time, third_incorrect, third_incorrect_time, period) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)', (cid, user, current_kanji, False, 0, '', False, '', False, '', False, '', 'current'))
     elif condition == 'insert':
-        curs.execute('INSERT INTO submissionProfile(spuid, user, kanji, correct, correct_time, first_incorrect, first_incorrect_time, second_incorrect, second_incorrect_time, third_incorrect, third_incorrect_time, period) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)', (cid, user, current_kanji, False, '', False, '', False, '', False, '', 'current'))
+        curs.execute('INSERT INTO submissionProfile(spuid, user, kanji, correct, total_incorrect, correct_time, first_incorrect, first_incorrect_time, second_incorrect, second_incorrect_time, third_incorrect, third_incorrect_time, period) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)', (cid, user, current_kanji, False, 0, '', False, '', False, '', False, '', 'current'))
 
     conn.commit()
     return True
@@ -75,7 +75,7 @@ def _spuid_generator(user:str, period:str) -> str:
 
 
 
-def _sp_update(user:str, accuracy:bool, time:str, incorrect_number:int=0):
+def sp_update(user:str, accuracy:bool, time:str, incorrect_number:int=0):
     """ Updates submission profile in DB table """
     try:
         if accuracy:
@@ -84,7 +84,7 @@ def _sp_update(user:str, accuracy:bool, time:str, incorrect_number:int=0):
             col = SUB_PRO_DB_IC_COLS[incorrect_number]
             # print(f'corrected ica: {incorrect_number+1}')
             
-        curs.execute(f'UPDATE submissionProfile SET {col}=?, {col}_time=? WHERE user=? AND period=?', (True, time, user, 'current'))
+        curs.execute(f'UPDATE submissionProfile SET {col}=?, correct=?, {col}_time=? WHERE user=? AND period=?', (True, incorrect_number+1, time, user, 'current'))
         conn.commit()
         return True
     except TypeError:
@@ -176,7 +176,7 @@ def vocab_import_csv(book:int):
 
 
 if __name__ == '__main__':
-    d = e = 2
-    e = 4
-    print(e, d)
+    d = [True, 1]
+    if d[0] and d[1] == 1:
+        print('true')
 
